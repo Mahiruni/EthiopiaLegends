@@ -6,16 +6,17 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
-      - name: Validate project prerequisites
+      - name: Validate Unity project prerequisites
         shell: bash
         run: |
           test -f ProjectSettings/ProjectVersion.txt
           test -f Packages/manifest.json
-          test -f Assets/Scenes/AxumPrototype.unity || { echo "No committed Unity scene. Generate, wire, and commit the scene before running Android CI."; exit 1; }
-      - name: Build Android development APK
+          test -f Assets/Editor/BuildAndGenerate.cs
+          test -n "${{ secrets.UNITY_LICENSE }}" || { echo "UNITY_LICENSE secret missing"; exit 1; }
+      - name: Generate prototype and build Android
         uses: game-ci/unity-builder@v4
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
@@ -23,10 +24,10 @@ jobs:
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           targetPlatform: Android
-          buildMethod: EthiopiaLegends.EditorTools.AndroidBuild.Build
+          buildMethod: EthiopiaLegends.EditorTools.BuildAndGenerate.BuildAndroid
           buildsPath: Builds
           versioning: None
-      - name: Upload Android build artifact
+      - name: Upload APK if build succeeded
         uses: actions/upload-artifact@v4
         with:
           name: ethiopia-legends-android-prototype
