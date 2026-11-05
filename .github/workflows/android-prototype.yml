@@ -9,11 +9,12 @@ jobs:
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
-      - name: Validate Unity project metadata
+      - name: Validate project prerequisites
         shell: bash
         run: |
-          test -f ProjectSettings/ProjectVersion.txt || { echo 'Unity project not initialized. Create Unity 6 URP project and commit ProjectSettings and Packages first.'; exit 1; }
-          test -f Packages/manifest.json || { echo 'Missing Unity package manifest'; exit 1; }
+          test -f ProjectSettings/ProjectVersion.txt
+          test -f Packages/manifest.json
+          test -f Assets/Scenes/AxumPrototype.unity || { echo "No committed Unity scene. Generate, wire, and commit the scene before running Android CI."; exit 1; }
       - name: Build Android development APK
         uses: game-ci/unity-builder@v4
         env:
@@ -22,12 +23,12 @@ jobs:
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           targetPlatform: Android
-          buildName: EthiopiaLegends
+          buildMethod: EthiopiaLegends.EditorTools.AndroidBuild.Build
           buildsPath: Builds
           versioning: None
       - name: Upload Android build artifact
         uses: actions/upload-artifact@v4
         with:
           name: ethiopia-legends-android-prototype
-          path: Builds/Android/
+          path: Builds/Android/*.apk
           if-no-files-found: error
